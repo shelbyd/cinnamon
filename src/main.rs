@@ -4,7 +4,9 @@ extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 
+mod ast;
 mod parse;
+
 use parse::*;
 use std::fs::*;
 use std::io::*;
@@ -21,7 +23,7 @@ fn main() {
     let mut contents = vec![];
     file.read_to_end(&mut contents).unwrap();
 
-    let parse_trees: Vec<ParseTree> = contents.parse().unwrap();
+    let ast = contents.parse().unwrap();
 
-    println!("{:?}", parse_trees);
+    println!("{:?}", ast);
 }

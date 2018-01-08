@@ -1,17 +1,12 @@
+use ast::*;
 use nom::*;
 
-#[derive(PartialEq, Eq, Debug)]
-pub enum ParseTree {
-    Comment(String),
-    Command(Command),
-}
-
 pub trait Parse: Sized {
-    fn parse(self) -> Result<Vec<ParseTree>, ErrorKind>;
+    fn parse(self) -> Result<Vec<AST>, ErrorKind>;
 }
 
 impl Parse for Vec<u8> {
-    fn parse(self) -> Result<Vec<ParseTree>, ErrorKind> {
+    fn parse(self) -> Result<Vec<AST>, ErrorKind> {
         parse(&self[..]).to_result()
     }
 }
@@ -29,21 +24,18 @@ named!(path<&[u8], String>, map!(recognize!(
     many1!(alt_complete!(alphanumeric | tag!("/")))
 ), into_string));
 
-#[derive(PartialEq, Eq, Debug)]
-pub struct Command(String);
-
 named!(command<&[u8], Command>, do_parse!(
     path: path >>
     char!(';') >>
     (Command(path))
 ));
 
-named!(parse_tree<&[u8], Vec<ParseTree>>, ws!(many0!(alt_complete!(
-    comment => { |s| ParseTree::Comment(s) } |
-    command => { |c| ParseTree::Command(c) }
+named!(parse_tree<&[u8], Vec<AST>>, ws!(many0!(alt_complete!(
+    comment => { |s| AST::Comment(s) } |
+    command => { |c| AST::Command(c) }
 ))));
 
-named!(parse<&[u8], Vec<ParseTree>>, do_parse!(
+named!(parse<&[u8], Vec<AST>>, do_parse!(
     parse_tree: ws!(parse_tree) >>
     eof!() >>
     (parse_tree)
@@ -66,7 +58,7 @@ mod tests {
 
         assert_eq!(
             file.parse().unwrap(),
-            vec![ParseTree::Comment(" This is a comment!".to_owned())]
+            vec![AST::Comment(" This is a comment!".to_owned())]
         );
     }
 
@@ -160,8 +152,8 @@ mod tests {
         assert_eq!(
             file.parse().unwrap(),
             vec![
-                ParseTree::Comment(" Comment".to_owned()),
-                ParseTree::Comment(" Another".to_owned()),
+                AST::Comment(" Comment".to_owned()),
+                AST::Comment(" Another".to_owned()),
             ]
         );
     }
