@@ -1,7 +1,10 @@
+extern crate nom;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
 
+mod parse;
+use parse::*;
 use std::fs::*;
 use std::io::*;
 use structopt::*;
@@ -13,9 +16,11 @@ struct Cinnamon {
 
 fn main() {
     let args = Cinnamon::from_args();
-    let file = BufReader::new(File::open(args.filename).unwrap());
+    let mut file = File::open(args.filename).unwrap();
+    let mut contents = vec![];
+    file.read_to_end(&mut contents).unwrap();
 
-    for line in file.lines() {
-      println!("{}", line.unwrap());
-    }
+    let parse_tree: ParseTree = contents.parse().unwrap();
+
+    println!("{:?}", parse_tree);
 }
