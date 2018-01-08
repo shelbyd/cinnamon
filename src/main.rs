@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate nom;
 extern crate structopt;
 #[macro_use]
@@ -20,7 +21,7 @@ fn main() {
     let mut contents = vec![];
     file.read_to_end(&mut contents).unwrap();
 
-    let parse_tree: ParseTree = contents.parse().unwrap();
+    let parse_trees: Vec<ParseTree> = contents.parse().unwrap();
 
-    println!("{:?}", parse_tree);
+    println!("{:?}", parse_trees);
 }
