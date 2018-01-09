@@ -1,0 +1,3 @@
+#! /usr/bin/env cinnamon
+
+exit 0;
