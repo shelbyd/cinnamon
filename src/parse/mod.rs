@@ -23,16 +23,18 @@ fn into_string<'a>(bytes: &'a [u8]) -> String {
     String::from_utf8(bytes.to_owned()).unwrap()
 }
 
-named!(parse_tree<Vec<AST>>, ws!(many0!(alt_complete!(
+named!(
+    parse_tree<Vec<AST>>,
+    ws!(many0!(alt_complete!(
     comment => { |s| AST::Comment(s) } |
     command => { |c| AST::Command(c) }
-))));
+)))
+);
 
-named!(parse<Vec<AST>>, do_parse!(
-    parse_tree: ws!(parse_tree) >>
-    eof!() >>
-    (parse_tree)
-));
+named!(
+    parse<Vec<AST>>,
+    do_parse!(parse_tree: ws!(parse_tree) >> eof!() >> (parse_tree))
+);
 
 #[cfg(test)]
 mod tests {

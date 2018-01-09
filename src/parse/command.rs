@@ -1,21 +1,21 @@
 use ast::*;
 use nom::*;
 use super::*;
-use super::escaped::{escaped as escaped_string};
+use super::escaped::escaped as escaped_string;
 
-named!(path<String>, map!(recognize!(
-    many1!(alt_complete!(alphanumeric | tag!("/")))
-), into_string));
+named!(
+    path<String>,
+    map!(
+        recognize!(many1!(alt_complete!(alphanumeric | tag!("/")))),
+        into_string
+    )
+);
 
-named!(arg<String>,
+named!(
+    arg<String>,
     alt_complete!(
-        do_parse!(
-            tag!("\"") >>
-            s: escaped_string >>
-            tag!("\"") >>
-            (s)
-        ) |
-        map!(is_not!("; \""), into_string)
+        do_parse!(tag!("\"") >> s: escaped_string >> tag!("\"") >> (s))
+            | map!(is_not!("; \""), into_string)
     )
 );
 
