@@ -1,0 +1,4 @@
+#! /usr/bin/env cinnamon
+
+echo bare words;
+echo "quoted special characters;";
