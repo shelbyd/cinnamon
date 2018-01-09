@@ -1,13 +1,13 @@
 use super::*;
 
 named!(pub escaped<String>, alt_complete!(
-    map!(peek!(tag!("\"")), |_| String::new()) |
+    value!(String::new(), peek!(tag!("\""))) |
     map!(escaped_transform!(
         is_not!("\\\""),
         '\\',
         alt!(
-            char!('"') => { |_| &b"\""[..] } |
-            take!(0) => { |_| &b"\\"[..] }
+            value!(&b"\""[..], char!('"')) |
+            value!(&b"\\"[..], take!(0))
         )),
     |s| into_string(&s))
 ));
@@ -82,6 +82,14 @@ mod tests {
         assert_eq!(
             escaped(&b"\\t\\r\\'"[..]),
             IResult::Done(&b""[..], "\\t\\r\\'".to_owned())
+        );
+    }
+
+    #[test]
+    fn starts_with_escaped_terminal() {
+        assert_eq!(
+            escaped(&b"\\\""[..]),
+            IResult::Done(&b""[..], "\"".to_owned())
         );
     }
 }

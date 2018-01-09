@@ -14,8 +14,7 @@ named!(
 named!(
     arg<String>,
     alt_complete!(
-        do_parse!(tag!("\"") >> s: escaped_string >> tag!("\"") >> (s))
-            | map!(is_not!("; \""), into_string)
+        delimited!(tag!("\""), escaped_string, tag!("\"")) | map!(is_not!("; \""), into_string)
     )
 );
 
