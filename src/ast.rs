@@ -16,11 +16,27 @@ impl AST {
 }
 
 #[derive(PartialEq, Eq, Debug)]
-pub struct Command(pub String);
+pub struct Command {
+    command: String,
+    args: Vec<String>,
+}
+
+impl Command {
+    pub fn new<S>(s: S, args: Vec<S>) -> Command
+    where
+        S: ToString,
+    {
+        Command {
+            command: s.to_string(),
+            args: args.into_iter().map(|s| s.to_string()).collect(),
+        }
+    }
+}
 
 impl Command {
     fn execute(self) {
-        ProcessCommand::new(self.0)
+        ProcessCommand::new(self.command)
+            .args(self.args)
             .spawn()
             .expect("could not spawn child process")
             .wait()
