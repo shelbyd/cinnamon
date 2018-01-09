@@ -25,5 +25,7 @@ fn main() {
 
     let ast = contents.parse().unwrap();
 
-    println!("{:?}", ast);
+    for statement in ast {
+        statement.execute();
+    }
 }
