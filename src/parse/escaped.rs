@@ -5,7 +5,10 @@ named!(pub escaped<&[u8], String>, alt_complete!(
     map!(escaped_transform!(
         is_not!("\\\""),
         '\\',
-        alt!(char!('"') => { |_| &b"\""[..] })),
+        alt!(
+            char!('"') => { |_| &b"\""[..] } |
+            take!(0) => { |_| &b"\\"[..] }
+        )),
     |s| into_string(&s))
 ));
 
@@ -46,5 +49,15 @@ mod tests {
     #[test]
     fn immediate_terminal() {
         assert_eq!(escaped(&b"\""[..]), IResult::Done(&b"\""[..], "".to_owned()));
+    }
+
+    #[test]
+    fn newline() {
+        assert_eq!(escaped(&b"\\n"[..]), IResult::Done(&b""[..], "\\n".to_owned()));
+    }
+
+    #[test]
+    fn other_escapes() {
+        assert_eq!(escaped(&b"\\t\\r\\'"[..]), IResult::Done(&b""[..], "\\t\\r\\'".to_owned()));
     }
 }
