@@ -1,4 +1,11 @@
 #! /usr/bin/env cinnamon
 
 echo bare words;
-echo "quoted special characters;";
+
+echo "semicolon: ;";
+
+echo "quote: \"";
+
+echo "escaped: \ttab\nnewline";
+
+echo -e "evaluated: \ttab\nnewline";
