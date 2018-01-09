@@ -1,5 +1,10 @@
+mod command;
+mod comment;
+
 use ast::*;
 use nom::*;
+use self::command::*;
+use self::comment::*;
 
 pub trait Parse: Sized {
     fn parse(self) -> Result<Vec<AST>, ErrorKind>;
@@ -14,21 +19,6 @@ impl Parse for Vec<u8> {
 fn into_string<'a>(bytes: &'a [u8]) -> String {
     String::from_utf8(bytes.to_owned()).unwrap()
 }
-
-named!(comment<&[u8], String>, map!(
-    delimited!(tag!("#"), not_line_ending, alt_complete!(eol | eof!())),
-    into_string
-));
-
-named!(path<&[u8], String>, map!(recognize!(
-    many1!(alt_complete!(alphanumeric | tag!("/")))
-), into_string));
-
-named!(command<&[u8], Command>, do_parse!(
-    path: path >>
-    char!(';') >>
-    (Command(path))
-));
 
 named!(parse_tree<&[u8], Vec<AST>>, ws!(many0!(alt_complete!(
     comment => { |s| AST::Comment(s) } |
@@ -60,82 +50,6 @@ mod tests {
             file.parse().unwrap(),
             vec![AST::Comment(" This is a comment!".to_owned())]
         );
-    }
-
-    #[cfg(test)]
-    mod comment {
-        use super::*;
-
-        #[test]
-        fn just_hash() {
-            assert_eq!(comment(&b"#"[..]), IResult::Done(&b""[..], "".to_owned()));
-        }
-
-        #[test]
-        fn text() {
-            assert_eq!(
-                comment(&b"# text"[..]),
-                IResult::Done(&b""[..], " text".to_owned())
-            );
-        }
-
-        #[test]
-        fn another_line() {
-            assert_eq!(
-                comment(&b"# text\n# other text"[..]),
-                IResult::Done(&b"# other text"[..], " text".to_owned())
-            );
-        }
-
-        #[test]
-        fn windows_line_ending() {
-            assert_eq!(
-                comment(&b"# text\r\n"[..]),
-                IResult::Done(&b""[..], " text".to_owned())
-            );
-        }
-
-        #[test]
-        fn escaped_newline() {
-            assert_eq!(
-                comment(&b"# text\\n"[..]),
-                IResult::Done(&b""[..], " text\\n".to_owned())
-            );
-        }
-    }
-
-    #[cfg(test)]
-    mod command {
-        use super::*;
-
-        #[test]
-        fn alpha() {
-            assert_eq!(
-                command(&b"echo;"[..]),
-                IResult::Done(&b""[..], Command("echo".to_owned()))
-            );
-        }
-
-        #[test]
-        fn alpha_numeric() {
-            assert_eq!(
-                command(&b"echo2;"[..]),
-                IResult::Done(&b""[..], Command("echo2".to_owned()))
-            );
-        }
-
-        #[test]
-        fn includes_path() {
-            assert_eq!(
-                command(&b"/bin/echo;"[..]),
-                IResult::Done(&b""[..], Command("/bin/echo".to_owned()))
-            );
-        }
-
-        #[test]
-        fn empty_string() {
-            assert!(command(&b";"[..]).is_err());
-        }
     }
 
     #[test]
