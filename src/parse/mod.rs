@@ -12,7 +12,9 @@ pub trait Parse: Sized {
 
 impl Parse for Vec<u8> {
     fn parse(self) -> Result<Vec<AST>, ErrorKind> {
-        parse(&self[..]).to_result()
+        parse(&self[..])
+            .to_result()
+            .map_err(|e| e.into_error_kind())
     }
 }
 
