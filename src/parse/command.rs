@@ -1,17 +1,23 @@
 use ast::*;
 use nom::*;
 use super::*;
+use super::escaped::{escaped as escaped_string};
 
 named!(path<&[u8], String>, map!(recognize!(
     many1!(alt_complete!(alphanumeric | tag!("/")))
 ), into_string));
 
-named!(arg<&[u8], String>, map!(
+named!(arg<&[u8], String>,
     alt_complete!(
-        delimited!(tag!("\""), take_until!("\""), tag!("\"")) |
-        is_not!("; \"")
+        do_parse!(
+            tag!("\"") >>
+            s: escaped_string >>
+            tag!("\"") >>
+            (s)
+        ) |
+        map!(is_not!("; \""), into_string)
     )
-, into_string));
+);
 
 named!(pub command<&[u8], Command>, do_parse!(
     path: path >>
@@ -116,7 +122,7 @@ mod tests {
         }
 
         #[test]
-        fn wrapped_in_quotes() {
+        fn empty_quotes() {
             assert_eq!(arg(&b"\"\""[..]), IResult::Done(&b""[..], "".to_owned()));
         }
 
@@ -136,6 +142,14 @@ mod tests {
         #[test]
         fn single_quote() {
             assert!(arg(&b"\""[..]).is_err());
+        }
+
+        #[test]
+        fn escaped_single_quote() {
+            assert_eq!(
+                arg(&b"\"\\\"\""[..]),
+                IResult::Done(&b""[..], "\"".to_owned())
+            );
         }
     }
 }

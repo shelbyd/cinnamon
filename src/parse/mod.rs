@@ -1,5 +1,6 @@
 mod command;
 mod comment;
+mod escaped;
 
 use ast::*;
 use nom::*;
