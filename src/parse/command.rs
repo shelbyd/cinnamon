@@ -3,11 +3,11 @@ use nom::*;
 use super::*;
 use super::escaped::{escaped as escaped_string};
 
-named!(path<&[u8], String>, map!(recognize!(
+named!(path<String>, map!(recognize!(
     many1!(alt_complete!(alphanumeric | tag!("/")))
 ), into_string));
 
-named!(arg<&[u8], String>,
+named!(arg<String>,
     alt_complete!(
         do_parse!(
             tag!("\"") >>
@@ -19,7 +19,7 @@ named!(arg<&[u8], String>,
     )
 );
 
-named!(pub command<&[u8], Command>, do_parse!(
+named!(pub command<Command>, do_parse!(
     path: path >>
     args: many0!(ws!(arg)) >>
     char!(';') >>

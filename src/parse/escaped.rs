@@ -1,6 +1,6 @@
 use super::*;
 
-named!(pub escaped<&[u8], String>, alt_complete!(
+named!(pub escaped<String>, alt_complete!(
     map!(peek!(tag!("\"")), |_| String::new()) |
     map!(escaped_transform!(
         is_not!("\\\""),

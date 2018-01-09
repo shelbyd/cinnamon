@@ -1,7 +1,7 @@
 use nom::*;
 use super::*;
 
-named!(pub comment<&[u8], String>, map!(
+named!(pub comment<String>, map!(
     delimited!(tag!("#"), not_line_ending, alt_complete!(eol | eof!())),
     into_string
 ));
