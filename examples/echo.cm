@@ -9,3 +9,11 @@ echo "quote: \"";
 echo "escaped: \ttab\nnewline";
 
 echo -e "evaluated: \ttab\nnewline";
+
+echo foo\"bar\n\t;
+
+echo foo
+bar;
+
+# Parsing error
+# echo foo"bar";

@@ -12,15 +12,26 @@ named!(
 );
 
 named!(
-    arg<String>,
-    alt_complete!(
-        delimited!(tag!("\""), escaped_string, tag!("\"")) | map!(is_not!("; \""), into_string)
+    bare_word<String>,
+    map!(
+        // TODO(shelbyd): Reduce duplication between this and escaped.rs
+        escaped_transform!(
+            is_not!(" \t\r\n;\"\\"),
+            '\\',
+            alt!(value!(&b"\"", char!('"')) | value!(&b"\\", take!(0)))
+        ),
+        |s| into_string(&s)
     )
+);
+
+named!(
+    arg<String>,
+    alt_complete!(delimited!(tag!("\""), escaped_string, tag!("\"")) | bare_word)
 );
 
 named!(pub command<Command>, do_parse!(
     path: path >>
-    args: many0!(ws!(arg)) >>
+    args: ws!(separated_list_complete!(multispace, arg)) >>
     char!(';') >>
     (Command::new(path, args))
 ));
@@ -150,5 +161,42 @@ mod tests {
                 IResult::Done(&b""[..], "\"".to_owned())
             );
         }
+
+        #[test]
+        fn bare_word_and_escaped_quote() {
+            assert_eq!(
+                arg(&b"foo\\\"bar"[..]),
+                IResult::Done(&b""[..], "foo\"bar".to_owned())
+            );
+        }
+
+        #[test]
+        fn newline_in_bare_word() {
+            assert_eq!(
+                arg(&b"foo\nbar"[..]),
+                IResult::Done(&b"\nbar"[..], "foo".to_owned())
+            );
+        }
+
+        #[test]
+        fn escaped_newline_in_bare_word() {
+            assert_eq!(
+                arg(&b"foo\\nbar"[..]),
+                IResult::Done(&b""[..], "foo\\nbar".to_owned())
+            );
+        }
+    }
+
+    #[test]
+    fn quotes_next_to_bare_words() {
+        assert!(command(&b"echo foo\"bar\";"[..]).is_err());
+    }
+
+    #[test]
+    fn newlines_between_bare_words() {
+        assert_eq!(
+            command(&b"echo foo\nbar;"[..]),
+            IResult::Done(&b""[..], Command::new("echo", vec!["foo", "bar"]))
+        );
     }
 }
