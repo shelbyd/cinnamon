@@ -31,7 +31,7 @@ fn main() -> Result<(), Error> {
         .map_err(|_| err_msg("Could not parse file"))?;
 
     for statement in ast {
-        statement.execute();
+        statement.execute()?;
     }
 
     Ok(())
