@@ -1,6 +1,6 @@
 use super::escaped::escaped as escaped_string;
 use super::*;
-use ast::*;
+use crate::ast::*;
 use nom::*;
 
 named!(

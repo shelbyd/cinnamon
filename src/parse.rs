@@ -4,7 +4,7 @@ mod escaped;
 
 use self::command::*;
 use self::comment::*;
-use ast::*;
+use crate::ast::*;
 use nom::*;
 
 pub trait Parse: Sized {

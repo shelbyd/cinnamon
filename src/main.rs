@@ -8,8 +8,8 @@ extern crate structopt_derive;
 mod ast;
 mod parse;
 
+use crate::parse::*;
 use failure::*;
-use parse::*;
 use std::fs::*;
 use std::io::Read;
 use structopt::*;
