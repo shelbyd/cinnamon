@@ -1,16 +1,26 @@
-use std::process::Command as ProcessCommand;
+use std::process::{Command as ProcessCommand, ExitStatus};
+
+use failure::*;
 
 #[derive(PartialEq, Eq, Debug)]
 pub enum AST {
     Comment(String),
     Command(Command),
+    If(Command, Command),
 }
 
 impl AST {
-    pub fn execute(self) {
+    pub fn execute(self) -> Result<(), Error> {
         match self {
-            AST::Comment(_) => {}
-            AST::Command(c) => c.execute(),
+            AST::Comment(_) => Ok(()),
+            AST::Command(c) => c.execute().map(|_| ()),
+            AST::If(predicate, block) => {
+                if predicate.execute()?.success() {
+                    block.execute().map(|_| ())
+                } else {
+                    Ok(())
+                }
+            }
         }
     }
 }
@@ -34,12 +44,11 @@ impl Command {
 }
 
 impl Command {
-    fn execute(self) {
-        ProcessCommand::new(self.command)
+    fn execute(self) -> Result<ExitStatus, Error> {
+        let exit = ProcessCommand::new(self.command)
             .args(self.args)
-            .spawn()
-            .expect("could not spawn child process")
-            .wait()
-            .expect("could not wait for child process");
+            .spawn()?
+            .wait()?;
+        Ok(exit)
     }
 }
