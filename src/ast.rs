@@ -6,7 +6,7 @@ use failure::*;
 pub enum AST {
     Comment(String),
     Command(Command),
-    If(Command, Command),
+    If(Command, Vec<AST>),
 }
 
 impl AST {
@@ -16,7 +16,10 @@ impl AST {
             AST::Command(c) => c.execute().map(|_| ()),
             AST::If(predicate, block) => {
                 if predicate.execute()?.success() {
-                    block.execute().map(|_| ())
+                    block
+                        .into_iter()
+                        .map(|ast| ast.execute().map(|_| ()))
+                        .collect::<Result<_, _>>()
                 } else {
                     Ok(())
                 }

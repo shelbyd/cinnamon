@@ -1,9 +1,11 @@
 mod command;
 mod comment;
 mod escaped;
+mod if_stmt;
 
 use self::command::*;
 use self::comment::*;
+use self::if_stmt::*;
 use crate::ast::*;
 use nom::*;
 
@@ -24,8 +26,9 @@ fn into_string<'a>(bytes: &'a [u8]) -> String {
 }
 
 named!(
-    parse_tree<Vec<AST>>,
+    pub parse_tree<Vec<AST>>,
     ws!(many0!(alt_complete!(
+    if_stmt => { |(predicate, block)| AST::If(predicate, block) } |
     comment => { |s| AST::Comment(s) } |
     command_line => { |c| AST::Command(c) }
 )))
