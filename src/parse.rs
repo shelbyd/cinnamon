@@ -27,7 +27,7 @@ named!(
     parse_tree<Vec<AST>>,
     ws!(many0!(alt_complete!(
     comment => { |s| AST::Comment(s) } |
-    command => { |c| AST::Command(c) }
+    command_line => { |c| AST::Command(c) }
 )))
 );
 
