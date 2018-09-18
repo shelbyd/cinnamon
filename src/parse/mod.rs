@@ -2,10 +2,10 @@ mod command;
 mod comment;
 mod escaped;
 
-use ast::*;
-use nom::*;
 use self::command::*;
 use self::comment::*;
+use ast::*;
+use nom::*;
 
 pub trait Parse: Sized {
     fn parse(self) -> Result<Vec<AST>, ErrorKind>;

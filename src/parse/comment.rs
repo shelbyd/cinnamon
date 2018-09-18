@@ -1,5 +1,5 @@
-use nom::*;
 use super::*;
+use nom::*;
 
 named!(pub comment<String>, map!(
     delimited!(tag!("#"), not_line_ending, alt_complete!(eol | eof!())),

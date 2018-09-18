@@ -1,7 +1,7 @@
+use super::escaped::escaped as escaped_string;
+use super::*;
 use ast::*;
 use nom::*;
-use super::*;
-use super::escaped::escaped as escaped_string;
 
 named!(
     path<String>,
