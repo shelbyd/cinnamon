@@ -1,0 +1,28 @@
+#! /usr/bin/env cinnamon
+
+if true {
+  echo "pass";
+}
+
+if false {
+  echo "fail";
+}
+
+if true {
+  echo "pass";
+} else {
+  echo "fail";
+}
+
+if false {
+  echo "fail";
+} else {
+  echo "pass";
+}
+
+if false {
+  echo "fail";
+} else if true {
+  echo "pass";
+}
+
