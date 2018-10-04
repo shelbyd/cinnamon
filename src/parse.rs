@@ -28,7 +28,7 @@ fn into_string<'a>(bytes: &'a [u8]) -> String {
 named!(
     pub parse_tree<Vec<AST>>,
     ws!(many0!(alt_complete!(
-    if_stmt => { |(predicate, block)| AST::If(predicate, block) } |
+    if_stmt => { |cond| AST::If(cond) } |
     comment => { |s| AST::Comment(s) } |
     command_line => { |c| AST::Command(c) }
 )))
