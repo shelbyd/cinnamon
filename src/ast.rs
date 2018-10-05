@@ -11,7 +11,7 @@ pub enum AST {
 }
 
 impl AST {
-    pub fn execute(self) -> Result<Option<ExitStatus>, Error> {
+    pub fn execute(&self) -> Result<Option<ExitStatus>, Error> {
         match self {
             AST::Comment(_) => Ok(None),
             AST::Command(c) => c.execute().map(Some),
@@ -40,9 +40,9 @@ impl Command {
 }
 
 impl Command {
-    fn execute(self) -> Result<ExitStatus, Error> {
-        let exit = ProcessCommand::new(self.command)
-            .args(self.args)
+    fn execute(&self) -> Result<ExitStatus, Error> {
+        let exit = ProcessCommand::new(&self.command)
+            .args(&self.args)
             .spawn()?
             .wait()?;
         Ok(exit)
@@ -65,12 +65,11 @@ impl Conditional {
         }
     }
 
-    fn execute(self) -> Result<Option<ExitStatus>, Error> {
-        let maybe_exit = self.predicate.execute()?;
-        if maybe_exit.success() {
+    fn execute(&self) -> Result<Option<ExitStatus>, Error> {
+        if self.predicate.execute()?.success() {
             self.if_block.execute()
         } else {
-            match self.else_block {
+            match &self.else_block {
                 None => Ok(None),
                 Some(b) => b.execute(),
             }
@@ -82,16 +81,15 @@ impl Conditional {
 pub struct Block(pub Vec<AST>);
 
 impl Block {
-    fn execute(self) -> Result<Option<ExitStatus>, Error> {
-        let mut last_exit = None;
-        for ast in self.0 {
-            last_exit = ast.execute()?.or(last_exit);
-            if let Some(e) = last_exit {
-                if !e.success() {
-                    break;
-                }
-            }
-        }
-        Ok(last_exit)
+    fn execute(&self) -> Result<Option<ExitStatus>, Error> {
+        self.0
+            .iter()
+            .map(|ast| ast.execute())
+            .take_while(|exit| match exit {
+                Err(_) => false,
+                Ok(None) => true,
+                Ok(Some(exit)) => exit.success(),
+            }).last()
+            .unwrap_or(Ok(None))
     }
 }
