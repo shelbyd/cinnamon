@@ -22,7 +22,29 @@ if false {
 
 if false {
   echo "fail";
+} else if false {
+  echo "fail";
+} else if false {
+  echo "fail";
 } else if true {
+  echo "pass";
+} else {
+  echo "fail";
+}
+
+if (true) {
   echo "pass";
 }
 
+if (true)
+  echo "pass";
+else
+  echo "fail";
+
+if true {
+  if true {
+    if true {
+      echo "pass";
+    }
+  }
+}
