@@ -2,10 +2,12 @@ mod command;
 mod comment;
 mod escaped;
 mod if_stmt;
+mod while_stmt;
 
 use self::command::*;
 use self::comment::*;
 use self::if_stmt::*;
+use self::while_stmt::*;
 use crate::ast::*;
 use nom::*;
 
@@ -30,6 +32,7 @@ named!(
     alt_complete!(
         block => { |b| AST::Block(Block(b)) } |
         if_stmt => { |cond| AST::If(cond) } |
+        while_stmt => { |stmt| AST::While(stmt) } |
         comment => { |s| AST::Comment(s) } |
         command_line => { |c| AST::Command(c) }
 ));

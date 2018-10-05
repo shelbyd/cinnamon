@@ -8,6 +8,7 @@ pub enum AST {
     Command(Command),
     If(Conditional),
     Block(Block),
+    While(While),
 }
 
 impl AST {
@@ -17,6 +18,7 @@ impl AST {
             AST::Command(c) => c.execute().map(Some),
             AST::If(c) => c.execute(),
             AST::Block(b) => b.execute(),
+            AST::While(w) => w.execute(),
         }
     }
 }
@@ -91,5 +93,33 @@ impl Block {
                 Ok(Some(exit)) => exit.success(),
             }).last()
             .unwrap_or(Ok(None))
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct While {
+    predicate: Command,
+    block: Box<AST>,
+}
+
+impl While {
+    pub fn new(predicate: Command, block: AST) -> While {
+        While {
+            predicate,
+            block: Box::new(block),
+        }
+    }
+
+    fn execute(&self) -> Result<Option<ExitStatus>, Error> {
+        let mut last_exit = None;
+        while self.predicate.execute()?.success() {
+            last_exit = self.block.execute()?.or(last_exit);
+            if let Some(exit) = last_exit {
+                if !exit.success() {
+                    break;
+                }
+            }
+        }
+        Ok(last_exit)
     }
 }
