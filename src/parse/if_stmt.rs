@@ -3,19 +3,19 @@ use crate::ast::*;
 use nom::*;
 
 named!(
-    block<Vec<AST>>,
+    pub block<Vec<AST>>,
     do_parse!(tag!("{") >> tree: parse_tree >> tag!("}") >> (tree))
 );
 
 named!(
-    els<Option<Vec<AST>>>,
-    opt!(complete!(ws!(preceded!(tag!("else"), block))))
+    els<Option<AST>>,
+    opt!(complete!(ws!(preceded!(tag!("else"), ast))))
 );
 
 named!(pub if_stmt<Conditional>, do_parse!(
         tag!("if") >>
         command: ws!(command) >>
-        block: block >>
+        block: ast >>
         els: els >>
         (Conditional::new(command, block, els))
       ));
@@ -30,7 +30,11 @@ mod tests {
             if_stmt(&b"if true {}"[..]),
             IResult::Done(
                 &b""[..],
-                Conditional::new(Command::new("true", vec![]), vec![], None)
+                Conditional::new(
+                    Command::new("true", vec![]),
+                    AST::Block(Block(vec![])),
+                    None
+                )
             )
         );
     }
@@ -48,10 +52,10 @@ mod tests {
                 &b""[..],
                 Conditional::new(
                     Command::new("true", vec![]),
-                    vec![
+                    AST::Block(Block(vec![
                         AST::Command(Command::new("echo", vec!["foo"])),
                         AST::Command(Command::new("echo", vec!["bar"])),
-                    ],
+                    ])),
                     None,
                 )
             )
@@ -64,7 +68,30 @@ mod tests {
             if_stmt(&b"if false {} else {}"[..]),
             IResult::Done(
                 &b""[..],
-                Conditional::new(Command::new("false", vec![]), vec![], Some(vec![]))
+                Conditional::new(
+                    Command::new("false", vec![]),
+                    AST::Block(Block(vec![])),
+                    Some(AST::Block(Block(vec![])))
+                )
+            )
+        );
+    }
+
+    #[test]
+    fn empty_else_if() {
+        assert_eq!(
+            if_stmt(&b"if false {} else if false {}"[..]),
+            IResult::Done(
+                &b""[..],
+                Conditional::new(
+                    Command::new("false", vec![]),
+                    AST::Block(Block(vec![])),
+                    Some(AST::If(Conditional::new(
+                        Command::new("false", vec![]),
+                        AST::Block(Block(vec![])),
+                        None
+                    )))
+                )
             )
         );
     }

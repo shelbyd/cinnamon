@@ -7,6 +7,7 @@ pub enum AST {
     Comment(String),
     Command(Command),
     If(Conditional),
+    Block(Block),
 }
 
 impl AST {
@@ -15,6 +16,7 @@ impl AST {
             AST::Comment(_) => Ok(None),
             AST::Command(c) => c.execute().map(Some),
             AST::If(c) => c.execute(),
+            AST::Block(b) => b.execute(),
         }
     }
 }
@@ -50,20 +52,16 @@ impl Command {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Conditional {
     predicate: Command,
-    if_block: Block,
-    else_block: Option<Block>,
+    if_block: Box<AST>,
+    else_block: Option<Box<AST>>,
 }
 
 impl Conditional {
-    pub fn new(
-        predicate: Command,
-        if_block: Vec<AST>,
-        else_block: Option<Vec<AST>>,
-    ) -> Conditional {
+    pub fn new(predicate: Command, if_block: AST, else_block: Option<AST>) -> Conditional {
         Conditional {
             predicate,
-            if_block: Block(if_block),
-            else_block: else_block.map(Block),
+            if_block: Box::new(if_block),
+            else_block: else_block.map(Box::new),
         }
     }
 
@@ -81,7 +79,7 @@ impl Conditional {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct Block(Vec<AST>);
+pub struct Block(pub Vec<AST>);
 
 impl Block {
     fn execute(self) -> Result<Option<ExitStatus>, Error> {
