@@ -15,7 +15,6 @@ This way, we can get the best of all worlds and do less of the mundane parts of 
 
 ## TODO
 
-- [ ] Conditionals
 - [ ] Control flow (while)
 - [ ] Control flow (for)
 - [ ] Functions
