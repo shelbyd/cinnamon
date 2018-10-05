@@ -16,7 +16,7 @@ named!(
     map!(
         // TODO(shelbyd): Reduce duplication between this and escaped.rs
         escaped_transform!(
-            is_not!(" \t\r\n;\"\\{"),
+            is_not!(" \t\r\n;\"\\{)"),
             '\\',
             alt!(value!(&b"\"", char!('"')) | value!(&b"\\", take!(0)))
         ),
@@ -29,11 +29,20 @@ named!(
     alt_complete!(delimited!(tag!("\""), escaped_string, tag!("\"")) | bare_word)
 );
 
-named!(pub command<Command>, do_parse!(
-    path: path >>
-    args: ws!(separated_list_complete!(multispace, arg)) >>
-    (Command::new(path, args))
-));
+named!(
+    raw_command<Command>,
+    do_parse!(
+        path: path
+            >> args: ws!(separated_list_complete!(multispace, arg))
+            >> (Command::new(path, args))
+    )
+);
+
+named!(pub command<Command>,
+       alt!(
+           raw_command |
+           delimited!(char!('('), command, char!(')'))
+       ));
 
 named!(pub command_line<Command>, do_parse!(
     command: command >>
@@ -206,6 +215,22 @@ mod tests {
     fn newlines_between_bare_words() {
         assert_eq!(
             command_line(&b"echo foo\nbar;"[..]),
+            IResult::Done(&b""[..], Command::new("echo", vec!["foo", "bar"]))
+        );
+    }
+
+    #[test]
+    fn surrounded_in_parens() {
+        assert_eq!(
+            command(&b"(echo foo bar)"[..]),
+            IResult::Done(&b""[..], Command::new("echo", vec!["foo", "bar"]))
+        );
+    }
+
+    #[test]
+    fn three_parens() {
+        assert_eq!(
+            command(&b"(((echo foo bar)))"[..]),
             IResult::Done(&b""[..], Command::new("echo", vec!["foo", "bar"]))
         );
     }
