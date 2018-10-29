@@ -119,19 +119,26 @@ pub struct Block(pub Vec<AST>);
 
 impl Block {
     fn execute<E: Executor>(&self, executor: &mut E) -> Result<Option<E::ExitStatus>, Error> {
-        let mut last = None;
-
         let iter = self.0.iter().map(|ast| ast.execute_with(executor));
-        for exit in iter {
-            last = exit?.or(last);
-            if let Some(last) = &last {
-                if !last.success() {
-                    break;
-                }
+        consume_until_exit::<E, _>(iter)
+    }
+}
+
+fn consume_until_exit<E, I>(iter: I) -> Result<Option<E::ExitStatus>, Error>
+where
+    E: Executor,
+    I: Iterator<Item = Result<Option<E::ExitStatus>, Error>>,
+{
+    let mut last = None;
+    for exit in iter {
+        last = exit?.or(last);
+        if let Some(last) = &last {
+            if !last.success() {
+                break;
             }
         }
-        Ok(last)
     }
+    Ok(last)
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -149,19 +156,17 @@ impl While {
     }
 
     fn execute<E: Executor>(&self, executor: &mut E) -> Result<Option<E::ExitStatus>, Error> {
-        let mut last = None;
+        let executor = std::cell::RefCell::new(executor);
 
-        // TODO(shelbyd): Remove duplication between this and Block.
-        while self.predicate.execute(executor)?.success() {
-            let exit = self.block.execute_with(executor);
-            last = exit?.or(last);
-            if let Some(last) = &last {
-                if !last.success() {
-                    break;
-                }
-            }
-        }
-        Ok(last)
+        let iter = std::iter::repeat(())
+            .map(|_| self.predicate.execute(&mut **executor.borrow_mut()))
+            .take_while(|pred| pred.as_ref().map(Success::success).unwrap_or(true))
+            .map(|check| {
+                check?;
+                self.block.execute_with(&mut **executor.borrow_mut())
+            });
+
+        consume_until_exit::<E, _>(iter)
     }
 }
 
